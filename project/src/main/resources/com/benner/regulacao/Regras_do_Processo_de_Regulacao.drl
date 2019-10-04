@@ -1,0 +1,75 @@
+package com.benner.regulacao;
+import org.kie.api.runtime.process.WorkflowProcessInstance;
+
+
+rule "Validar se existem negativas cadastrais"
+	ruleflow-group "com.benner.regulacao:Setup_inicial"
+	dialect "mvel"
+	when
+	    //Se a solicitacao está autorizada previamente no sistema apenas registrar
+		$controle:controle(negativa_cadastral)
+	then
+	    //Precisa pensar em como alimentar este campo, se na entrada do processo ou na preparação dos dados.
+        System.out.println("REGULACAO, possui negativas cadastrais");
+end
+
+rule "Escrever_no_log_informacoes"
+    ruleflow-group "com.benner.regulacao:Setup_Process_Id"
+	dialect "mvel"
+	enabled true
+	when
+	    $processInstance: WorkflowProcessInstance()
+	    $controle:controle()
+	then
+        $controle.setProcess_id($processInstance.getId());
+	    System.out.println("ID DO CONTROLE:"+ $controle.getGuia_id());
+	    System.out.println("ID DO PROCESSO:"+ $processInstance.getId());
+	    System.out.println("DS DO PROCESSO:"+ $processInstance.getProcessName());
+	    System.out.println("ST DO PROCESSO:"+ $processInstance.getState()+"\n");
+        retract($processInstance);	    
+end
+
+/*
+
+rule "Definir os papeis dos processos"
+    ruleflow-group "com.benner.regulacao:Setup_inicial"
+	dialect "mvel"
+	enabled true
+	when
+	    $controle:controle()
+    then
+        $controle.setPp_adm("retaguarda");
+        $controle.setPp_enf("enfermeiros");
+        $controle.setPp_med("medicos");
+        $controle.setPp_cli("clientes");
+        //$controle.setPp_odo("");
+        $controle.setPp_pre("prestadores");
+end
+*/
+
+rule "Verificar_Especificidades"
+    ruleflow-group "com.benner.regulacao:Verificar_Especificidades"
+	dialect "mvel"
+	enabled true
+	when
+		$controle: controle(prestador_fora_domicilio)
+	then
+	    //Se as condições de especificidade forem satisfeitas será necessário setar o controle para que 
+	    //que o fluxo siga pela processo da especificidade.
+        System.out.println("REGULACAO, possui EXCECAO");
+end
+
+/*
+rule "Temporaria_Confirmar_Urgencia_Emergencia"
+	ruleflow-group "Confirmar_Urgencia_Emergencia"
+	dialect "mvel"
+	enabled true
+	when
+		$guia:guia(carateratendimento=="2")
+        //1-Eletivo
+        //2-Urgência/emergência
+	then
+        System.out.println("@@@_URGENCIA_EMERGENCIA_@@@");  
+        //System.out.println("URGENCIA_EMERGENCIA: " + vCONTROLE.getUrg_emerg_confirmada());  
+end
+*/
